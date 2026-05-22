@@ -117,7 +117,7 @@ The n8n workflow handles the final stage of the pipeline — verifying the repor
 
 ### Workflow Screenshot
 
-![n8n Workflow](CS_n8n_workflow.png)
+![n8n Workflow](n8n_workflow.png)
 
 > The workflow has two branches: the main delivery path (top) and the failure alert path (bottom). No company names, credentials, or sensitive data appear in the workflow — only logic and node types.
 
