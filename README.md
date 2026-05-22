@@ -163,7 +163,7 @@ Where AI is integrated: The pipeline uses the AI chatbot performance data (AI in
 
 ## 🔑 Key Concepts Demonstrated
 
-- ✅ **Multi-system integration** — PostgreSQL → Google Drive → Google Sheets → n8n → Signal → NAS
+- ✅ **Multi-system integration** — Database → Cloud Storage → Spreadsheet Automation → Workflow Orchestration → Local Backup → Messaging
 - ✅ **Low-code orchestration** — n8n workflow with conditional branching and failure alerting
 - ✅ **Scripting** — Python for data extraction/processing, Google Apps Script for report population
 - ✅ **Human-in-the-loop design** — `=IMPORTRANGE` lets domain experts contribute commentary without touching the pipeline
