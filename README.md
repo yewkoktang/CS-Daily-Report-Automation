@@ -119,38 +119,47 @@ The n8n workflow handles the final stage of the pipeline — verifying the repor
 
 ![n8n Workflow](n8n_workflow.png)
 
-> The workflow has two branches: the main delivery path (top) and the failure alert path (bottom). No company names, credentials, or sensitive data appear in the workflow — only logic and node types.
+> The n8n workflow automates the daily report distribution pipeline — verifying data readiness, downloading and storing reports, and notifying the internal group with both the report and any anomaly alerts.
 
 ### Logic Flow
 
 ```
-[Scheduled Trigger — Daily]
-      │
-      ▼
+[Scheduled Trigger — Daily at 11 AM]
+    |
+    ▼
 [Verify Data Has Been Updated]
-      │
-      ├── YES ──► [Fetch Report Google Sheet URL]
-      │                 │
-      │                 ▼
-      │           [Build Alert Information Block]
-      │                 │
-      │                 ▼
-      │           [Compose Signal Message]
-      │           (Date + key headline stats + report link)
-      │                 │
-      │                 ▼
-      │           [Send to Signal Group]
-      │                 │
-      │                 ▼
-      │           [Verify Message Sent]
-      │                 │
-      │                 ▼
-      │           [Save Report Copy to NAS]
-      │
-      └── NO  ──► [Send Alert: "Data Not Updated"]
-                        │
-                        ▼
-                  [Notify Signal Group]
+    |
+    |— YES —→ [Fetch Daily Report Information from Sheet]
+    |               |
+    |               ▼
+    |          [Loop Over Each Report Item]
+    |               |
+    |               |— loop —→ [Extract Daily Report URL]
+    |               |               |
+    |               |               ▼
+    |               |          [Download Daily Report]
+    |               |               |
+    |               |               ▼
+    |               |          [Save Report to Local Storage]
+    |               |               |
+    |               |               ▼
+    |               |          [Compose Daily Report Message]
+    |               |               |
+    |               |               ▼
+    |               |          [Send Report to Internal Group]
+    |               |
+    |               |— done —→ [Fetch Anomalies Information from Sheet]
+    |                               |
+    |                               ▼
+    |                          [Compose Anomaly Alert Message]
+    |                               |
+    |                               ▼
+    |                          [Alert Internal Group]
+    |
+    |— NO  —→ [Compose Data Not Updated Message]
+    (rare)          |
+                    ▼
+               [Notify Internal Group]
 ```
 
 ---
