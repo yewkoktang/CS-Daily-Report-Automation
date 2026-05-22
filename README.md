@@ -1,6 +1,6 @@
 # 📋 Customer Service Daily Report — Automated Pipeline
 
-> **Eliminated 3 hours of daily manual work** — CS data flows automatically from PostgreSQL to a fully formatted Google Sheet report, delivered to the team via Signal every morning.
+> **Eliminated 3 hours of daily manual work** — CS data flows automatically from PostgreSQL to a fully formatted Google Sheet report, delivered to the internal group every morning.
 
 ---
 
@@ -33,13 +33,12 @@ The pipeline handles:
 ┌──────────────────────────────────────────────────────────────────────┐
 │              CS DAILY REPORT AUTOMATION PIPELINE                     │
 └──────────────────────────────────────────────────────────────────────┘
-
   [Windows Task Scheduler]
        │  Triggers daily at scheduled time
        ▼
   [Python Script]
-       │  Connects to company PostgreSQL database
-       │  Runs SQL queries across multiple CS data tables
+       │  Connects to company database
+       │  Runs queries across multiple CS data tables
        │  Cleans, calculates, and formats the data
        ▼
   [Google Drive]
@@ -50,29 +49,44 @@ The pipeline handles:
        │  Updates the master report Google Sheet:
        │    → Inbound volume & 7-day trend
        │    → Question type breakdown & daily change %
-       │    → VIP-level distribution per question category
+       │    → Distribution per question category
        │    → AI chatbot performance (handling rate, transfer rate)
        │    → Top 15 closure reasons
-       │    → Emotional member  summaries
-       │    → AI vs human response time & stability analysis
+       │    → Member sentiment summaries
+       │    → AI vs human response time analysis
        ▼
   [=IMPORTRANGE] ──────────────────────────────────────────────────┐
-       │  CS staff write qualitative comments in a                 │
-       │  separate input Google Sheet (their familiar interface)   │
-       │  Comments are pulled automatically into the report        │◄─ CS Staff Input
-       ▼                                                           │
-  [n8n Workflow]                                                   │
-       │                                                           │
+       │  Staff write qualitative comments in a separate           │
+       │  input Google Sheet (their familiar interface)            │
+       │  Comments are pulled automatically into the report        │◄─ Staff Input
+       ▼                                                           
+  [n8n Workflow]                                                   
+       │                                                           
        ├── Verify: Has today's data been updated?                  
-       │                                                           │
-       ├── YES ──► Fetch report Google Sheet URL                   │
-       │                ▼                                          │
-       │           Save report copy to NAS (backup)                │
-       │                ▼                                          │
-       │           Compose Signal message with date + report link  │
-       │                ▼                                          │
-       │           Send to CS team Signal group                    │                                                                │                                                           │ 
-       └── NO  ──► Send alert to Signal group: "Data not updated"  │
+       │                                                           
+       ├── YES ──► Fetch Daily Report Information from Sheet       
+       │                ▼                                          
+       │           Loop Over Each Report Item                      
+       │                │                                          
+       │                ├── loop ──► Extract Daily Report URL      
+       │                │                ▼                         
+       │                │           Download Daily Report          
+       │                │                ▼                         
+       │                │           Save Report to Local Storage   
+       │                │                ▼                         
+       │                │           Compose Daily Report Message   
+       │                │                ▼                         
+       │                │           Send Report to Internal Group  
+       │                │                                          
+       │                └── done ──► Fetch Anomalies Information   
+       │                                 ▼                         
+       │                            Compose Anomaly Alert Message  
+       │                                 ▼                         
+       │                            Alert Internal Group           
+       │                                                           
+       └── NO  ──► Compose Data Not Updated Message    (rare)      
+                        ▼                                          
+                   Notify Internal Group
 ```
 
 ---
@@ -105,9 +119,9 @@ The automated report replicates and extends what previously took 3 hours of manu
 | Cloud Storage | Google Drive API | Transfer daily data file to cloud |
 | Report Population | Google Apps Script | Update all report sections in Google Sheet |
 | Staff Commentary | Google Sheets `=IMPORTRANGE` | Pull CS-written comments from input sheet |
-| Workflow & Delivery | **n8n** | Verify update, compose message, send to Signal |
-| Backup | Synology NAS | Archive daily report copy via n8n |
-| Delivery | Signal Messenger API | Notify CS team with report link |
+| Workflow & Delivery | **n8n** | Verify update, download report, and distribute to internal group |
+| Backup | Network Attached Storage (NAS) | Archive daily report copy locally |
+| Delivery | Messaging API | Notify internal group with report link |
 
 ---
 
@@ -120,47 +134,6 @@ The n8n workflow handles the final stage of the pipeline — verifying the repor
 ![n8n Workflow](n8n_workflow.png)
 
 > The n8n workflow automates the daily report distribution pipeline — verifying data readiness, downloading and storing reports, and notifying the internal group with both the report and any anomaly alerts.
-
-### Logic Flow
-
-```
-[Scheduled Trigger — Daily at 11 AM]
-    |
-    ▼
-[Verify Data Has Been Updated]
-    |
-    |— YES —→ [Fetch Daily Report Information from Sheet]
-    |               |
-    |               ▼
-    |          [Loop Over Each Report Item]
-    |               |
-    |               |— loop —→ [Extract Daily Report URL]
-    |               |               |
-    |               |               ▼
-    |               |          [Download Daily Report]
-    |               |               |
-    |               |               ▼
-    |               |          [Save Report to Local Storage]
-    |               |               |
-    |               |               ▼
-    |               |          [Compose Daily Report Message]
-    |               |               |
-    |               |               ▼
-    |               |          [Send Report to Internal Group]
-    |               |
-    |               |— done —→ [Fetch Anomalies Information from Sheet]
-    |                               |
-    |                               ▼
-    |                          [Compose Anomaly Alert Message]
-    |                               |
-    |                               ▼
-    |                          [Alert Internal Group]
-    |
-    |— NO  —→ [Compose Data Not Updated Message]
-    (rare)          |
-                    ▼
-               [Notify Internal Group]
-```
 
 ---
 
